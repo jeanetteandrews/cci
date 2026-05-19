@@ -1,33 +1,23 @@
-#PINK 1201
-
 import time
 import math
 import board
-import supervisor
-import sys
 from adafruit_circuitplayground import cp
+import neopixel
+
+led = neopixel.NeoPixel(board.A1, 1, brightness=1, auto_write=False)
+led[0] = (255, 255, 255)
+led.show()
 
 cp.pixels.brightness = 0.1
 cp.pixels.auto_write = False
 
 PIXEL_ANGLES = [270, 234, 198, 162, 126, 90, 54, 18, 342, 306]
-
 cp._speaker_enable.value = True
 last_pixel = None
-color = (100, 10, 25)
-
-sleep_duration = 0.214
+color = (52, 61, 235)
+sleep_duration = 0.115  # fixed at your BEAT value
 
 while True:
-    if supervisor.runtime.serial_bytes_available:
-        msg = sys.stdin.readline().strip()
-        try:
-            val = float(msg)
-            if 0.05 < val < 1.0:
-                sleep_duration = val
-        except ValueError:
-            pass
-
     x, y, z = cp.acceleration
     gravity_angle = math.degrees(math.atan2(y, -x)) % 360
     best_pixel = min(range(10), key=lambda i: abs(
