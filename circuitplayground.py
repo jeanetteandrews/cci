@@ -15,9 +15,17 @@ PIXEL_ANGLES = [270, 234, 198, 162, 126, 90, 54, 18, 342, 306]
 cp._speaker_enable.value = True
 last_pixel = None
 color = (52, 61, 235)
-sleep_duration = 0.115  # fixed at your BEAT value
+sleep_duration = 0.115
+
+prev_button_a = False
 
 while True:
+    # check button A
+    button_a = cp.button_a
+    if button_a and not prev_button_a:
+        print("DEVICE:inst1")  # change per device
+    prev_button_a = button_a
+
     x, y, z = cp.acceleration
     gravity_angle = math.degrees(math.atan2(y, -x)) % 360
     best_pixel = min(range(10), key=lambda i: abs(

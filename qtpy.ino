@@ -42,6 +42,9 @@ uint16_t zToColor(float z) {
 
 void setup() {
   Serial.begin(9600);
+  delay(1000);
+  Serial.println("DEVICE:lcd1");
+  
   tft->begin(80000000);
   tft->setRotation(1);
   tft->fillScreen(BLACK);

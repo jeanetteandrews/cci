@@ -285,3 +285,64 @@ document.getElementById('serialLCD4').addEventListener('click', async () => {
   writerLCD4 = await connectSerial(onDataLCD);
   console.log("LCD 4 connected");
 });
+
+navigator.serial.addEventListener('connect', async (e) => {
+  const port = e.target;
+  console.log("device plugged in — press button A to identify");
+
+  await new Promise(resolve => setTimeout(resolve, 1000)); // wait 1 second
+
+  try {
+    await port.open({ baudRate: 9600 });
+  } catch(e) {
+    console.log("port open error:", e);
+    return;
+  }
+
+  const encoder = new TextEncoderStream();
+  encoder.readable.pipeTo(port.writable);
+  const portWriter = encoder.writable.getWriter();
+
+  let buf = "";
+  let identified = false;
+  let assignedHandler = null;
+
+  const decoder = new TextDecoderStream();
+  port.readable.pipeTo(decoder.writable);
+  decoder.readable.pipeTo(new WritableStream({
+    write(chunk) {
+      buf += chunk;
+      let lines = buf.split("\n");
+      buf = lines.pop();
+
+      for (let line of lines) {
+        line = line.trim();
+        if (!line) continue;
+
+        if (line.startsWith("DEVICE:")) {
+          const name = line.replace("DEVICE:", "").trim();
+          console.log(`identified: ${name}`);
+          identified = true;
+
+          if (name === "inst1") { writer1 = portWriter; assignedHandler = onDataInstrument1; console.log("inst1 reconnected"); }
+          else if (name === "inst2") { writer2 = portWriter; assignedHandler = onDataInstrument2; console.log("inst2 reconnected"); }
+          else if (name === "inst3") { writer3 = portWriter; assignedHandler = onDataInstrument3; console.log("inst3 reconnected"); }
+          else if (name === "inst4") { writer4 = portWriter; assignedHandler = onDataInstrument4; console.log("inst4 reconnected"); }
+          continue;
+        }
+
+        if (identified && assignedHandler) {
+          assignedHandler(line + "\n");
+        }
+      }
+    }
+  }));
+});
+
+navigator.serial.addEventListener('disconnect', (e) => {
+  console.log("device disconnected — plug it back in and press button A");
+  if (writer1 && e.target === writer1._port) writer1 = null;
+  if (writer2 && e.target === writer2._port) writer2 = null;
+  if (writer3 && e.target === writer3._port) writer3 = null;
+  if (writer4 && e.target === writer4._port) writer4 = null;
+});
